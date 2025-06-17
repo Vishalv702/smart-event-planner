@@ -1,11 +1,9 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: './src/.env' });
+dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import routes from './routes/index.js';
 import {handleErrors,handleNotFound} from './middleware/errorHandler.js';
-
-
 
 const app = express();
 
@@ -19,7 +17,7 @@ app.use('/', routes);
 // Error handling middleware
 app.use(handleErrors);
 
-// 404 handler
+// 404 handler  , if the above routes not matches ,this middleware runs
 app.use(handleNotFound);
 
 export default app;

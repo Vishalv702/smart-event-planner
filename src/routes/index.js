@@ -1,13 +1,14 @@
 import express from 'express';
 import eventRoutes from './eventRoutes.js';
 import weatherRoutes from './weatherRoutes.js';
+import authRoutes from './authRoutes.js';
 
 const router = express.Router();
 
-// Route for event-related endpoints
+router.use('/auth',authRoutes);
+
 router.use('/events', eventRoutes);
 
-// Route for weather-related endpoints
 router.use('/weather', weatherRoutes);
 
 export default router;
