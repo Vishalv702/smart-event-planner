@@ -3,16 +3,11 @@ import mongoose from 'mongoose';
 export const validateObjectId = (id) => {
   return mongoose.Types.ObjectId.isValid(id);
 };
-/**
- * Normalize a location string (trim, lowercase, single space)
- */
+
 export const normalizeLocation = (location) => {
   return location.toLowerCase().trim().replace(/\s+/g, ' ');
 };
 
-/**
- * Calculate event suitability score based on weather and event type
- */
 import { EVENT_REQUIREMENTS } from './constants.js';
 
 export const calculateSuitabilityScore = (weatherData, eventType) => {
@@ -58,3 +53,37 @@ export const calculateSuitabilityScore = (weatherData, eventType) => {
 
   return { score, rating, factors };
 };
+
+export const analyzeWeatherTrend = (forecastList) => {
+  if (!forecastList || forecastList.length < 2) return 'Insufficient data';
+
+  const trend = {
+    temperature: [],
+    precipitation: [],
+    wind_speed: []
+  };
+
+  forecastList.forEach(entry => {
+    trend.temperature.push(entry.main.temp);
+    trend.precipitation.push(entry.rain?.['3h'] || 0);
+    trend.wind_speed.push(entry.wind.speed);
+  });
+
+  const getTrendDirection = (arr) => {
+    let increase = 0, decrease = 0;
+    for (let i = 1; i < arr.length; i++) {
+      if (arr[i] > arr[i - 1]) increase++;
+      else if (arr[i] < arr[i - 1]) decrease++;
+    }
+    if (increase > decrease) return 'increasing';
+    if (decrease > increase) return 'decreasing';
+    return 'stable';
+  };
+
+  return {
+    temperature: getTrendDirection(trend.temperature),
+    precipitation: getTrendDirection(trend.precipitation),
+    wind: getTrendDirection(trend.wind_speed)
+  };
+};
+

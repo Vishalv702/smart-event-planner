@@ -45,6 +45,23 @@ const eventSchema = new mongoose.Schema({
     visibility: Number,
     last_updated: Date
   },
+  historical_weather: [
+    {
+      date: String,
+      temperature: Number,
+      wind_speed: Number,
+      precipitation: Number,
+      error: String
+    }
+  ],
+  hourly_forecast: [
+    {
+      time: String,
+      temperature: Number,
+      condition: String,
+      wind_speed: Number
+    }
+  ],
   suitability: {
     score: Number,
     rating: String,

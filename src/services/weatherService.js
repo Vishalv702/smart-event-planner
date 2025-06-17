@@ -49,7 +49,9 @@ class WeatherService {
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
 
-      return savedWeather.toObject();
+      return {...savedWeather.toObject(),
+        fullList:weatherData.fullList
+      };
     } catch (error) {
       throw new Error(`Weather fetch failed: ${error.message}`);
     }
@@ -64,37 +66,100 @@ class WeatherService {
   }
 
   async getWeatherByDate(coords, date) {
-    const targetDate = new Date(date);
-    const now = new Date();
-    const daysDiff = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
+  const targetDate = new Date(date);
+  const now = new Date();
+  const daysDiff = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
 
-    if (daysDiff <= 0) {
-      const response = await axios.get(
-        `${weatherConfig.BASE_URL}/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${weatherConfig.API_KEY}&units=metric`
-      );
-      return { data: response.data, fullResponse: response.data };
-    } else if (daysDiff <= weatherConfig.FORECAST_LIMIT_DAYS) {
-      const response = await axios.get(
-        `${weatherConfig.BASE_URL}/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${weatherConfig.API_KEY}&units=metric`
-      );
+  if (daysDiff <= 0) {
+    const response = await axios.get(
+      `${weatherConfig.BASE_URL}/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${weatherConfig.API_KEY}&units=metric`
+    );
+    return {
+      data: response.data,
+      fullResponse: response.data,
+      fullList: null  // No forecast list for current/historical data
+    };
+  } else if (daysDiff <= weatherConfig.FORECAST_LIMIT_DAYS) {
+    const response = await axios.get(
+      `${weatherConfig.BASE_URL}/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${weatherConfig.API_KEY}&units=metric`
+    );
 
-      const closestForecast = this.findClosestForecast(response.data.list, targetDate);
+    const closestForecast = this.findClosestForecast(response.data.list, targetDate);
+
+    return {
+      data: {
+        main: closestForecast.main,
+        weather: closestForecast.weather,
+        wind: closestForecast.wind,
+        visibility: closestForecast.visibility || 10000,
+        rain: closestForecast.rain,
+        snow: closestForecast.snow
+      },
+      fullResponse: {
+        forecast: closestForecast,
+        full_response: response.data
+      },
+      fullList: response.data.list // ✅ Needed for trend analysis
+    };
+  } else {
+    throw new Error('Weather forecast only available for next 5 days');
+  }
+}
+
+  async getHistoricalWeather(lat, lon, pastDate) {
+    const timestamp = Math.floor(new Date(pastDate).getTime() / 1000); // convert to UNIX time
+
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/onecall/timemachine`,
+        {
+          params: {
+            lat,
+            lon,
+            dt: timestamp,
+            appid: weatherConfig.API_KEY,
+            units: 'metric'
+          }
+        }
+      );
 
       return {
-        data: {
-          main: closestForecast.main,
-          weather: closestForecast.weather,
-          wind: closestForecast.wind,
-          visibility: closestForecast.visibility || 10000,
-          rain: closestForecast.rain,
-          snow: closestForecast.snow
-        },
-        fullResponse: { forecast: closestForecast, full_response: response.data }
+        date: pastDate,
+        temp: response.data.current.temp,
+        condition: response.data.current.weather[0].description
       };
-    } else {
-      throw new Error('Weather forecast only available for next 5 days');
+    } catch (error) {
+      throw new Error(`Failed to fetch historical weather: ${error.message}`);
     }
   }
+async getHourlyForecast(lat, lon, date) {
+  const response = await axios.get(
+    `${weatherConfig.BASE_URL}/forecast`,
+    {
+      params: {
+        lat,
+        lon,
+        appid: weatherConfig.API_KEY,
+        units: 'metric'
+      }
+    }
+  );
+
+  const targetDate = new Date(date).toISOString().split('T')[0];
+
+  const hourlyForecast = response.data.list
+    .filter(entry => entry.dt_txt.startsWith(targetDate))
+    .map(entry => ({
+      time: entry.dt_txt,
+      temperature: entry.main.temp,
+      feels_like: entry.main.feels_like,
+      weather: entry.weather[0].description,
+      wind_speed: entry.wind.speed,
+      precipitation: (entry.rain?.['3h'] || entry.snow?.['3h'] || 0)
+    }));
+
+  return hourlyForecast;
+}
 
   findClosestForecast(forecastList, targetDate) {
     const targetTimestamp = targetDate.getTime();

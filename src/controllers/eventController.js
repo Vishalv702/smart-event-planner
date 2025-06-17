@@ -1,7 +1,7 @@
 import { Event } from '../models/index.js';
 import weatherService from '../services/weatherService.js';
 import suitabilityService from '../services/suitabilityService.js';
-import { validateObjectId } from '../utils/helpers.js';
+import { validateObjectId, analyzeWeatherTrend } from '../utils/helpers.js';
 
 class EventController {
   async createEvent(req, res) {
@@ -158,10 +158,45 @@ class EventController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
+      const coords = await weatherService.getCoordinates(event.location);
       const weatherData = await weatherService.fetchWeatherData(event.location, event.date);
+      const trend = weatherData.fullList ? analyzeWeatherTrend(weatherData.fullList) : null;
       const suitability = suitabilityService.calculateSuitabilityScore(weatherData, event.event_type);
 
-      await updateEventWeatherData(event, weatherData, suitability);
+      // Historical Data (last 3 weeks same day)
+      const historical = [];
+      for (let i = 1; i <= 3; i++) {
+        const pastDate = new Date(event.date);
+        pastDate.setDate(pastDate.getDate() - (7 * i));
+        try {
+          const pastData = await weatherService.getHistoricalWeather(coords.lat, coords.lon, pastDate);
+          historical.push(pastData);
+        } catch (err) {
+          historical.push({
+            date: pastDate.toISOString().split('T')[0],
+            error: 'Historical data unavailable'
+          });
+        }
+      }
+
+      // Hourly Forecast
+      let hourlyForecast = [];
+      try {
+        const eventDateObj = new Date(event.date);
+        const today = new Date();
+        const diffDays = (eventDateObj - today) / (1000 * 60 * 60 * 24);
+        if (diffDays <= 5 && diffDays >= 0) {
+          hourlyForecast = await weatherService.getHourlyForecast(coords.lat, coords.lon, event.date);
+        }
+      } catch (err) {
+        console.warn('Hourly forecast fetch failed:', err.message);
+      }
+
+      // Save to DB
+      await updateEventWeatherData(event, weatherData, suitability, {
+        historical_weather: historical,
+        hourly_forecast: hourlyForecast
+      });
 
       const recommendation = suitabilityService.getRecommendation(suitability.rating);
 
@@ -181,7 +216,10 @@ class EventController {
           visibility: weatherData.visibility
         },
         suitability,
-        recommendation
+        recommendation,
+        historical_weather: historical,
+        hourly_forecast: hourlyForecast,
+        weather_trend: trend
       });
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -189,7 +227,7 @@ class EventController {
   }
 }
 
-export const updateEventWeatherData = async (event, weatherData, suitability) => {
+export const updateEventWeatherData = async (event, weatherData, suitability, extra = {}) => {
   event.weather_data = {
     temperature: weatherData.temperature,
     feels_like: weatherData.feels_like,
@@ -201,7 +239,9 @@ export const updateEventWeatherData = async (event, weatherData, suitability) =>
     wind_direction: weatherData.wind_direction,
     precipitation: weatherData.precipitation,
     visibility: weatherData.visibility,
-    last_updated: new Date()
+    last_updated: new Date(),
+    historical_weather: extra.historical_weather || [],
+    hourly_forecast: extra.hourly_forecast || []
   };
 
   event.suitability = {
