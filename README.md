@@ -4,6 +4,16 @@ A backend system designed to help users plan outdoor events intelligently by con
 
 ---
 
+## 🌐 Live Demo
+
+Access the hosted backend here:  
+🔗 [Smart Event Planner on Render](https://smart-event-planner-w45e.onrender.com/)
+
+[Postman Collection Link](https://www.postman.com/material-administrator-52747242/workspace/weather-event-planner-apis/collection/42952734-409d7770-da68-4ed0-a77f-2797c990a5b6?action=share&creator=42952734) 
+---
+
+---
+
 ## 🚀 Features
 
 ### ✅ Core Functionality
