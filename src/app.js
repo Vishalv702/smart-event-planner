@@ -34,7 +34,8 @@ app.get('/', (req, res) => {
       { method: 'POST', path: '/auth/register', desc: 'Register user' },
       { method: 'POST', path: '/auth/login', desc: 'Login user' }
     ],
-    github: 'https://github.com/Vishalv702/smart-event-planner'
+    github: 'https://github.com/Vishalv702/smart-event-planner',
+    postman:'https://www.postman.com/material-administrator-52747242/workspace/weather-event-planner-apis/collection/42952734-409d7770-da68-4ed0-a77f-2797c990a5b6?action=share&creator=42952734'
   });
 });
 
