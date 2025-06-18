@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= appName %></title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    code {
+      background: #e0e0e0;
+      padding: 3px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1><%= appName %> - v<%= version %></h1>
+  <p><strong>Developer:</strong> <%= developer %></p>
+  <p><strong>Status:</strong> <%= status %></p>
+
+  <h2>📚 API Routes:</h2>
+  <ul>
+    <% routes.forEach(route => { %>
+      <li><code><%= route.method %></code> <%= route.path %> — <%= route.desc %></li>
+    <% }) %>
+  </ul>
+
+  <p>🔗 <a href="<%= github %>" target="_blank">GitHub Repository</a></p>
+</body>
+</html>
