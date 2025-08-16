@@ -1,0 +1,260 @@
+/* Home.css - Updated with Theme Integration */
+/* .home{
+    background: linear-gradient(135deg, #f8f8f8, #a2aae5);
+} */
+.banner {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  background: linear-gradient(
+      rgba(102, 126, 234, 0.8),
+      rgba(118, 75, 162, 0.8)
+    ),
+    url('../../assets/banner.jpg') center center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  overflow: hidden;
+}
+
+.banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+  z-index: 1;
+}
+
+.banner-content {
+  position: relative;
+  z-index: 2;
+  max-width: 700px;
+  padding: 0 20px;
+}
+
+.banner-content h1 {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.banner-content p {
+  font-size: 1.4rem;
+  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* CTA Button - Updated to use our theme button as fallback */
+.banner .cta-button {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 1.2rem 2rem;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-decoration: none;
+  border-radius: var(--radius-lg);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: var(--transition);
+  box-shadow: var(--shadow-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.banner .cta-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-medium);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* How It Works Section */
+.how-it-works {
+  padding: 4rem 2rem;
+  text-align: center;
+  position: relative;
+}
+.how-it-works {
+  background: rgba(255, 255, 255, 0.5); /* subtle difference */
+  backdrop-filter: blur(5px);
+  border-top: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.how-it-works::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+}
+
+.how-it-works > * {
+  position: relative;
+  z-index: 1;
+}
+
+.how-it-works h2 {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  font-weight: 700;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Individual step cards now use card-theme class */
+.steps .card-theme {
+  width: 100%;
+  text-align: center;
+  margin: 0; /* Remove any default margins */
+  box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+.steps .card-theme h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.steps .card-theme p {
+  font-size: 1rem;
+  color: var(--gray-text);
+  line-height: 1.6;
+}
+
+/* Why Choose Us Section */
+.why-choose-us {
+  padding: 4rem 2rem;
+  text-align: center;
+   background: linear-gradient(135deg, #eef1ff, #d4e1f8);
+}
+
+.why-choose-us h2 {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  font-weight: 700;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 1.3rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: var(--transition);
+  box-shadow: var(--shadow-light);
+}
+
+.feature-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-medium);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.feature-item span:first-child {
+  font-size: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .banner-content h1 {
+    font-size: 3rem;
+  }
+  
+  .how-it-works h2,
+  .why-choose-us h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .banner {
+    height: 70vh;
+  }
+  
+  .banner-content h1 {
+    font-size: 2.5rem;
+  }
+  
+  .banner-content p {
+    font-size: 1.2rem;
+  }
+  
+  .how-it-works,
+  .why-choose-us {
+    padding: 3rem 1rem;
+  }
+  
+  .steps {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 0 0.5rem;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .feature-item {
+    padding: 1.2rem 1.5rem;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner-content h1 {
+    font-size: 2rem;
+  }
+  
+  .banner-content p {
+    font-size: 1.1rem;
+  }
+  
+  .banner .cta-button {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .how-it-works h2,
+  .why-choose-us h2 {
+    font-size: 1.8rem;
+  }
+  
+  .steps .card-theme h3 {
+    font-size: 1.3rem;
+  }
+}

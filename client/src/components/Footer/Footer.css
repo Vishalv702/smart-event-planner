@@ -1,0 +1,50 @@
+.footer {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  border-radius: 0 !important;
+  background: var(--white); /* fallback if glass doesn't apply */
+  text-align: center;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.footer-text {
+  font-size: 1rem;
+  color: var(--gray-dark);
+  font-weight: 500;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: var(--gray-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.footer-links a:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.footer-icons {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-icons a {
+  color: var(--gray-text);
+  transition: var(--transition);
+}
+
+.footer-icons a:hover {
+  color: var(--primary-color);
+  transform: translateY(-2px);
+}
