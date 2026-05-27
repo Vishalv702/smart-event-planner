@@ -3,11 +3,12 @@ import { generateToken } from '../utils/token.js';
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production', // set true in production
-  sameSite: 'Lax', // or 'None' if using cross-site cookies with HTTPS
-  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production'
+    ? 'None'
+    : 'Lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000
 };
-
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
