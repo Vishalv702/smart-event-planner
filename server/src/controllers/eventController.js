@@ -180,18 +180,29 @@ class EventController {
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
-
+      
+    // Get weather data 
       const weatherData = await weatherService.fetchWeatherData(
         event.location,
         event.date,
       );
+  
+    // analyze weather trend
       const trend = weatherData.fullList
         ? analyzeWeatherTrend(weatherData.fullList)
         : null;
+
+    // Calculate suitability score    
       const suitability = suitabilityService.calculateSuitabilityScore(
         weatherData,
         event.event_type
       );
+
+    // Get recommendation based on suitability  
+      const recommendation = suitabilityService.getRecommendation(
+        suitability.rating
+      );  
+
 
       // Historical Data (last 3 weeks same day) but it requires subcription to a weather API, so it's commented out
     
@@ -237,10 +248,6 @@ class EventController {
       //   historical_weather: historical,
       //   hourly_forecast: hourlyForecast,
       // });
-
-      const recommendation = suitabilityService.getRecommendation(
-        suitability.rating
-      );
 
       res.json({
         event: {

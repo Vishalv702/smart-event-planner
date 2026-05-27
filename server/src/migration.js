@@ -1,6 +1,6 @@
 // migration.js
 import mongoose from "mongoose";
-import Event from "./models/Event.js"; // adjust path
+import Event from "./models/Event.js";
 
 await mongoose.connect("mongodb+srv://vishalvasu710:DMC0BClosE1Tevq0@cluster0.1ndb9mn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
 

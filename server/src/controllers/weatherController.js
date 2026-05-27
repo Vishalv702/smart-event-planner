@@ -1,7 +1,7 @@
-import { Event } from '../models/index.js';
-import weatherService from '../services/weatherService.js';
-import suitabilityService from '../services/suitabilityService.js';
-import { validateObjectId } from '../utils/helpers.js';
+import { Event } from "../models/index.js";
+import weatherService from "../services/weatherService.js";
+import suitabilityService from "../services/suitabilityService.js";
+import { validateObjectId } from "../utils/helpers.js";
 
 class WeatherController {
   async getWeatherData(req, res) {
@@ -9,8 +9,16 @@ class WeatherController {
       const { location, date } = req.params;
 
       const weatherData = await weatherService.fetchWeatherData(location, date);
-      
-      const { _id, __v, created_at, updated_at, api_response, normalized_location, ...cleanWeatherData } = weatherData;
+
+      const {
+        _id,
+        __v,
+        created_at,
+        updated_at,
+        api_response,
+        normalized_location,
+        ...cleanWeatherData
+      } = weatherData;
 
       res.json(cleanWeatherData);
     } catch (error) {
@@ -23,24 +31,32 @@ class WeatherController {
       const { id } = req.params;
 
       if (!validateObjectId(id)) {
-        return res.status(400).json({ error: 'Invalid event ID' });
+        return res.status(400).json({ error: "Invalid event ID" });
       }
 
       const event = await Event.findById(id);
       if (!event) {
-        return res.status(404).json({ error: 'Event not found' });
+        return res.status(404).json({ error: "Event not found" });
       }
 
       if (this.hasFreshSuitabilityData(event)) {
         return res.json(this.formatSuitabilityResponse(event, true));
       }
 
-      const weatherData = await weatherService.fetchWeatherData(event.location, event.date);
-      const suitability = suitabilityService.calculateSuitabilityScore(weatherData, event.event_type);
+      const weatherData = await weatherService.fetchWeatherData(
+        event.location,
+        event.date,
+      );
+      const suitability = suitabilityService.calculateSuitabilityScore(
+        weatherData,
+        event.event_type,
+      );
 
       await this.updateEventWeatherCache(event, weatherData, suitability);
 
-      res.json(this.formatSuitabilityResponse(event, false, weatherData, suitability));
+      res.json(
+        this.formatSuitabilityResponse(event, false, weatherData, suitability),
+      );
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -52,12 +68,12 @@ class WeatherController {
       const daysRange = parseInt(req.query.days) || 5;
 
       if (!validateObjectId(id)) {
-        return res.status(400).json({ error: 'Invalid event ID' });
+        return res.status(400).json({ error: "Invalid event ID" });
       }
 
       const event = await Event.findById(id);
       if (!event) {
-        return res.status(404).json({ error: 'Event not found' });
+        return res.status(404).json({ error: "Event not found" });
       }
 
       const alternatives = await this.findAlternativeDates(event, daysRange);
@@ -66,13 +82,8 @@ class WeatherController {
       const recommendations = this.getAlternativeRecommendation(alternatives);
 
       res.json({
-        event: {
-          id: event._id,
-          name: event.name,
-          original_date: event.date
-        },
         alternatives,
-        recommendations
+        recommendations,
       });
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -80,12 +91,19 @@ class WeatherController {
   }
 
   hasFreshSuitabilityData(event) {
-    return event.suitability && 
-           event.suitability.last_calculated && 
-           (new Date() - event.suitability.last_calculated) < 3600000;
+    return (
+      event.suitability &&
+      event.suitability.last_calculated &&
+      new Date() - event.suitability.last_calculated < 3600000
+    );
   }
 
-  formatSuitabilityResponse(event, cached, weatherData = null, suitability = null) {
+  formatSuitabilityResponse(
+    event,
+    cached,
+    weatherData = null,
+    suitability = null,
+  ) {
     const response = {
       event_id: event._id,
       event_name: event.name,
@@ -93,7 +111,7 @@ class WeatherController {
       date: event.date,
       location: event.location,
       suitability: suitability || event.suitability,
-      cached
+      cached,
     };
 
     const data = weatherData || event.weather_data;
@@ -102,7 +120,7 @@ class WeatherController {
         temperature: `${data.temperature}°C`,
         condition: data.weather_description,
         wind: `${data.wind_speed} m/s`,
-        precipitation: `${data.precipitation}mm`
+        precipitation: `${data.precipitation}mm`,
       };
     }
 
@@ -121,14 +139,14 @@ class WeatherController {
       wind_direction: weatherData.wind_direction,
       precipitation: weatherData.precipitation,
       visibility: weatherData.visibility,
-      last_updated: new Date()
+      last_updated: new Date(),
     };
 
     event.suitability = {
       score: suitability.score,
       rating: suitability.rating,
       factors: suitability.factors,
-      last_calculated: new Date()
+      last_calculated: new Date(),
     };
 
     await event.save();
@@ -147,19 +165,30 @@ class WeatherController {
       }
 
       try {
-        const weatherData = await weatherService.fetchWeatherData(event.location, checkDate.toISOString().split('T')[0]);
-        const suitability = suitabilityService.calculateSuitabilityScore(weatherData, event.event_type);
+        const weatherData = await weatherService.fetchWeatherData(
+          event.location,
+          checkDate.toISOString().split("T")[0],
+        );
+        
+        const suitability = suitabilityService.calculateSuitabilityScore(
+          weatherData,
+          event.event_type,
+        );
 
-        if (suitability.rating.toLowerCase() === 'good') {
+        const acceptableRatings = ["Excellent", "Good"];
+
+        if (acceptableRatings.includes(suitability.rating)) {
           alternatives.push({
-            date: checkDate.toISOString().split('T')[0],
+            date: checkDate.toISOString().split("T")[0],
+
             suitability,
+
             weather_summary: {
               temperature: `${weatherData.temperature}°C`,
               condition: weatherData.weather_description,
-              wind: `${weatherData.wind_speed} m/s`,
-              precipitation: `${weatherData.precipitation}mm`
-            }
+              wind: `${weatherData.wind_speed} km/h`,
+              precipitation: `${weatherData.precipitation}mm`,
+            },
           });
         }
       } catch (err) {
@@ -171,7 +200,8 @@ class WeatherController {
   }
 
   getAlternativeRecommendation(alternatives) {
-    if (alternatives.length === 0) return 'No better alternatives available within range.';
+    if (alternatives.length === 0)
+      return "No better alternatives available within range.";
     const best = alternatives[0];
     return `Consider rescheduling to ${best.date} for better suitability: ${best.suitability.score}`;
   }
@@ -180,6 +210,8 @@ class WeatherController {
 const controller = new WeatherController();
 
 export const getWeatherData = controller.getWeatherData.bind(controller);
-export const getEventSuitability = controller.getEventSuitability.bind(controller);
-export const getEventAlternatives = controller.getEventAlternatives.bind(controller);
+export const getEventSuitability =
+  controller.getEventSuitability.bind(controller);
+export const getEventAlternatives =
+  controller.getEventAlternatives.bind(controller);
 export default controller;

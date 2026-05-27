@@ -36,6 +36,7 @@ class WeatherService {
 
       // 2. Check Database Cache
       const dbCached = await this.checkDBCache(normalizedLocation, date);
+      
       if (dbCached) {
         console.log(`🌤️ DB cache hit for ${location} on ${date}`);
         this.updateMemoryCache(cacheKey, dbCached);
@@ -47,7 +48,6 @@ class WeatherService {
       const freshData = await this.fetchFromAPI(location, date, normalizedLocation);
       await this.saveToDB(normalizedLocation, date, freshData);
       this.updateMemoryCache(cacheKey, freshData);
-
       return this.formatResponse(freshData, true);
 
     } catch (error) {
@@ -91,6 +91,7 @@ class WeatherService {
     };
   }
 
+
   // ========================
   // Private Methods
   // ========================
@@ -99,13 +100,12 @@ class WeatherService {
     this.cacheStats.apiCalls++;
     console.log(`🌤️ Fetching fresh weather data for ${location} on ${date}`);
 
-    const coords = await this.getCoordinates(location);
+    const coords = await this.getCoordinates(normalizedLocation);
     const weatherData = await this.getWeatherByDate(coords, date);
-
+    
     if (weatherData.tooFar) {
       throw new Error("Forecast unavailable for this date");
     }
-
     return this.normalizeWeatherData(
       location,
       normalizedLocation,
@@ -206,49 +206,78 @@ class WeatherService {
     return null;
   }
 
-  async checkDBCache(normalizedLocation, date) {
-    const now = new Date();
-    const targetDate = new Date(date);
-    const isHistorical = targetDate < now;
+ async checkDBCache(normalizedLocation, date) {
+  const now = new Date();
+  const targetDate = new Date(date);
+  const isHistorical = targetDate < now;
 
-    const query = { 
-      normalized_location: normalizedLocation, 
-      date 
+  const query = { 
+    normalized_location: normalizedLocation, 
+    date 
+  };
+
+  if (!isHistorical) {
+    query.updated_at = { 
+      $gte: new Date(now - weatherConfig.DB_CACHE_DURATION) 
     };
+  }
 
-    // Only check TTL for current/future dates
-    if (!isHistorical) {
-      query.updated_at = { 
-        $gte: new Date(now - weatherConfig.DB_CACHE_DURATION) 
-      };
+  // Explicitly select the fields we need
+  const dbCached = await Weather.findOne(query)
+    .select('+fullList +api_response.list')
+    .lean();
+
+  if (dbCached) {
+    this.cacheStats.dbHits++;
+    
+    // Reconstruct fullList if it's missing or invalid
+    if (!dbCached.fullList) {
+      // Try to get it from api_response if available
+      dbCached.fullList = dbCached.api_response?.list || 
+                         dbCached.api_response?.full_response?.list || 
+                         null;
+    }
+    // Handle case where fullList might be stored as string
+    else if (typeof dbCached.fullList === 'string') {
+      try {
+        dbCached.fullList = JSON.parse(dbCached.fullList);
+      } catch {
+        dbCached.fullList = null;
+      }
     }
 
-    const dbCached = await Weather.findOne(query).lean();
-    if (dbCached) {
-      this.cacheStats.dbHits++;
-    }
     return dbCached;
   }
+  return null;
+}
 
-  async saveToDB(normalizedLocation, date, data) {
-    try {
-      await Weather.findOneAndUpdate(
-        { normalized_location: normalizedLocation, date },
-        { 
-          $set: { 
-            ...data,
-            updated_at: new Date() 
-          },
-          $setOnInsert: { 
-            created_at: new Date() 
-          }
-        },
-        { upsert: true }
-      );
-    } catch (error) {
-      console.error("DB save error:", error);
-    }
+async saveToDB(normalizedLocation, date, data) {
+  try {
+    // Create a clean data object with explicit fullList handling
+    const dbData = {
+      ...data,
+      // Ensure fullList is properly set
+      fullList: data.fullList || null,
+      updated_at: new Date()
+    };
+    await Weather.findOneAndUpdate(
+      { normalized_location: normalizedLocation, date },
+      { 
+        $set: dbData,
+        $setOnInsert: { 
+          created_at: new Date() 
+        }
+      },
+      { 
+        upsert: true,
+        // Return the document after update for verification
+        new: true  
+      }
+    );
+  } catch (error) {
+    console.error("DB save error:", error);
   }
+}
 
   updateMemoryCache(cacheKey, data) {
     this.memoryCache.set(cacheKey, {
@@ -309,6 +338,10 @@ class WeatherService {
   }
 
   normalizeWeatherData(location, normalizedLocation, date, coords, weatherData, fullResponse) {
+    const fullList = fullResponse?.list || 
+                 fullResponse?.full_response?.list || 
+                 null;
+
     return {
       location,
       normalized_location: normalizedLocation,
@@ -320,12 +353,12 @@ class WeatherService {
       pressure: weatherData.main.pressure,
       weather_main: weatherData.weather[0].main,
       weather_description: weatherData.weather[0].description,
-      wind_speed: weatherData.wind.speed,
+      wind_speed: weatherData.wind.speed * 3.6,
       wind_direction: weatherData.wind.deg || 0,
       precipitation: weatherData.rain?.["3h"] || weatherData.snow?.["3h"] || 0,
       visibility: (weatherData.visibility || 10000) / 1000,
       api_response: fullResponse,
-      fullList: fullResponse.list || null
+       fullList: fullList
     };
   }
 }

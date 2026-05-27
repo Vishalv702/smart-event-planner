@@ -46,7 +46,7 @@ const Home = () => {
         <div className="features-grid">
           <div className="feature-item animate-fadeInUp">
             <span className="text-success">✅</span>
-            <span>AI-based weather analysis</span>
+            <span>Weather analysis</span>
           </div>
           <div className="feature-item animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
             <span className="text-success">✅</span>

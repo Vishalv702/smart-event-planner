@@ -11,7 +11,7 @@ router.get('/:id',protect, eventController.getEventById);
 router.put('/:id',protect, eventController.updateEvent);
 router.delete('/:id',protect, eventController.deleteEvent);
 
-// Weather Check + Suitability
+// Weather Check + Suitability 
 router.post('/:id/weather-check', eventController.checkEventWeather);
 
 export default router;

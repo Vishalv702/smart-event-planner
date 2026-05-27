@@ -20,7 +20,8 @@ const EventDetails = () => {
       try {
         const res = await axios.post(`/events/${id}/weather-check`);
         const eventData = res.data;
-        console.log(eventData);
+        console.log("API called");
+        console.log("Fetched event data:", eventData);
         setEventData(eventData);
 
         const today = new Date();
@@ -59,7 +60,6 @@ const EventDetails = () => {
     setShowAlternates(true);
     try {
       const res = await axios.get(`weather/event/${id}/alternatives`);
-      console.log(res.data);
       setAlternateDates(res.data || []);
     } catch (err) {
       toast.error("Failed to fetch alternate dates.");
@@ -244,7 +244,7 @@ const EventDetails = () => {
                   <div className="weather-item">
                     <span className="weather-item-label">Wind Speed</span>
                     <p className="weather-item-value">
-                      💨 {weather.wind_speed} km/h
+                      💨 {weather.wind_speed.toFixed(2)} m/s
                     </p>
                   </div>
                   <div className="weather-item">
@@ -610,7 +610,7 @@ const EventDetails = () => {
             {recommendation && (
               <div className="recommendation-section glass-white">
                 <h4 className="section-title text-gradient-primary">
-                  💡 AI Recommendation
+                  💡 Recommendation
                 </h4>
                 <p className="recommendation-text">{recommendation}</p>
               </div>
